@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fe-deploy
+  labels:
+    name: fe-deploy
+    app: BC15-GC
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      name: fe-pod
+      app: BC15-GC
+  template:
+    metadata:
+      name: fe-pod
+      labels:
+        name: fe-pod
+        app: BC15-GC
+    spec:
+      containers:
+        - name: fe-pod
+          image: dhanrajnath/newfe3
+          ports:
+            - containerPort: 80
+ 
