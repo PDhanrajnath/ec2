@@ -56,7 +56,7 @@ spec:
     spec:
       containers:
         - name: fe-pod
-          image: dhanrajnath/newfe3
+          image: dhanrajnath/newfe17
           ports:
             - containerPort: 80
  
