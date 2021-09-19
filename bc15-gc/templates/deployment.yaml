@@ -1,61 +1,95 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "bc15-gc.fullname" . }}
+  name: be-deploy
   labels:
-    {{- include "bc15-gc.labels" . | nindent 4 }}
+    name: be-deploy
+    app: BC15-GC
 spec:
-  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
-      {{- include "bc15-gc.selectorLabels" . | nindent 6 }}
+      name: be-pod
+      app: BC15-GC
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+      name: be-pod
       labels:
-        {{- include "bc15-gc.selectorLabels" . | nindent 8 }}
+        name: be-pod
+        app: BC15-GC
     spec:
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      serviceAccountName: {{ include "bc15-gc.serviceAccountName" . }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: be
+          image: dhanrajnath/back-end-local
           ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+            - containerPort: 8080
+          env:
+            - name: "SPRING_DATASOURCE_URL"
+              value: "jdbc:postgresql://postgres:5432/jobs"
+            - name: "SPRING_DATASOURCE_USERNAME"
+              value: "postgres"
+            - name: "SPRING_DATASOURCE_PASSWORD"
+              value: "1234"
+            - name: "SPRING_JPA_HIBERNATE_DDL_AUTO"
+              value: "update"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fe-deploy
+  labels:
+    name: fe-deploy
+    app: BC15-GC
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      name: fe-pod
+      app: BC15-GC
+  template:
+    metadata:
+      name: fe-pod
+      labels:
+        name: fe-pod
+        app: BC15-GC
+    spec:
+      containers:
+        - name: fe-pod
+          image: dhanrajnath/newfe3
+          ports:
+            - containerPort: 80
+ 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deploy
+  labels:
+    name: postgres-deploy
+    app: BC15-GC
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      name: postgres-pod
+      app: BC15-GC
+  template:
+    metadata:
+      name: postgres-pod
+      labels:
+        name: postgres-pod
+        app: BC15-GC
+    spec:
+      containers:
+        - name: postgres
+          image: dhanrajnath/postgres
+          ports:
+            - containerPort: 5432
+          env:
+            - name: "POSTGRES_USER"
+              value: "postgres"
+            - name: "POSTGRES_PASSWORD"
+              value: "1234" 
+            - name: "POSTGRES_DB"
+              value: "jobs"
