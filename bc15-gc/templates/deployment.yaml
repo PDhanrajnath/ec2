@@ -56,20 +56,21 @@ spec:
     spec:
       containers:
         - name: fe-pod
-          image: dhanrajnath/newfe17
+          image: dhanrajnath/fe-img
           ports:
-            - containerPort: 80
+            - containerPort: 3000
  
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: postgres-deploy
   labels:
     name: postgres-deploy
     app: BC15-GC
 spec:
-  replicas: {{ .Values.replicaCount }}
+  serviceName: postgres
+  replicas: 2
   selector:
     matchLabels:
       name: postgres-pod
@@ -93,3 +94,10 @@ spec:
               value: "1234" 
             - name: "POSTGRES_DB"
               value: "jobs"
+          volumeMounts:
+            - name: pv-data-bc15
+              mountPath: /var/lib/postgresql/bc15data
+      volumes:
+        - name: pv-data-bc15
+          persistentVolumeClaim:
+            claimName: pvc-bc15
